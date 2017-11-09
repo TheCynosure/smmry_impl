@@ -83,11 +83,6 @@ int main(int argc, char** argv) {
     cleanup(text_buffer);
 	/* Load titles for use in sentence chopping */
 	load_titles("data/titles.txt");
-
-	int i;
-	for(i = 0; i < TITLES_LEN; i++) {
-		printf("%s\n", titles[i]);
-	}
     
     printf("%s\n", text_buffer);
     return 0;
@@ -172,6 +167,8 @@ void load_titles(char *title_file_path) {
 	int title_index = 0;
     for(c = text_buffer; *c != '\0'; c++) {
     	if(*c == '\n') {
+    		/* This does depend on the newline being in a valid place with a word following it */
+    		last_newline++;
     		int title_size = c - last_newline;
     		titles[title_index] = (char*) malloc(title_size + 1);
     		strncpy(titles[title_index], last_newline, title_size);
