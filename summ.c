@@ -9,29 +9,33 @@
 /* ---
    Implementation of a Linked List to be used later.
    --- */
+   
 typedef struct {
-	void *data;
+	char *data;
 	void *link;
 } Node;
 
 typedef struct {
 	Node *head;
+	int size;
 } LList;
 
 LList* create_llist() {
 	LList* list = malloc(sizeof(LList));
 	list->head = NULL;
+	list->size = 0;
 	return list;
 }
 
 /*
  * Simple Head Insertion Method.
  */
-insert(LList* l, void* data) {
+void insert(LList* l, char* data) {
 	Node* node = malloc(sizeof(Node));
 	node->data = data;
 	node->link = l->head;
 	l->head = node;
+	l->size++;
 }
 
 /* ---
@@ -83,8 +87,20 @@ int main(int argc, char** argv) {
     cleanup(text_buffer);
 	/* Load titles for use in sentence chopping */
 	load_titles("data/titles.txt");
-    
-    printf("%s\n", text_buffer);
+
+	/* Printing the string based on this custom system. */
+    LList* l = sentence_chop(text_buffer);
+    printf("%d", l->size);
+    Node *curr = l->head;
+    char* prev = text_buffer;
+    while(curr != NULL) {
+   		char* c;
+   		for(c = prev; c < curr->data; c++)
+    		printf("%c", *c);
+    	prev = curr->data;
+  		curr = curr->link;
+    }
+    printf("\n");
     return 0;
 }
 
@@ -110,6 +126,7 @@ LList *sentence_chop(char* text_buffer) {
 	int current_word_len = 0;
 	int new_sentence = 1;
 	char *c;
+	/* TODO: Make this work */
 	for(c = text_buffer; *c != '\0'; c++) {
 		/*Spaces signal the end of a word*/
 		if(*c == ' ')
@@ -126,12 +143,20 @@ LList *sentence_chop(char* text_buffer) {
 		} else {
 			current_word_len++;
 		}
-
+		
 		/*If new sentence is needed, add it.*/
 		if(new_sentence) {
 			insert(sen_list, c);
+			new_sentence = 1;
 		}
 	}
+
+	/*If we ended on a period, add it.*/
+	if(new_sentence) {
+		insert(sen_list, c);
+		new_sentence = 1;
+	}
+
 	return sen_list;
 }
 
@@ -189,8 +214,10 @@ int is_title(char *text_buffer, int word_len) {
 	for(i = 0; i < TITLES_LEN; i++) {
 		if(strlen(titles[i]) > word_len)
 			continue;
-		if(strncmp(titles[i], text_buffer - strlen(titles[i]), strlen(titles[i])) == 0)
+		if(strncmp(titles[i], text_buffer - strlen(titles[i]), strlen(titles[i])) == 0) {
+			printf("found a title\n");
 			return 0;
+		}
 	}
 	return 1; 
 }
