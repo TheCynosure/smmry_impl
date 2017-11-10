@@ -121,6 +121,10 @@ void cleanup(char* text_buff) {
     }
 }
 
+/*
+ * Makes a string buffer out of the string between last_sen -> current_sen.
+ * Then adds it into the ll passed in as a parameter.
+ */
 void chop_and_add(LList *ll, char* current_sen, char* last_sen) {
 	int size_of_sen = current_sen - last_sen + 1;
 	char *sentence = malloc(size_of_sen);
@@ -158,7 +162,6 @@ LList *sentence_chop(char* text_buffer) {
 		
 		/*If new sentence is needed, add it.*/
 		if(new_sentence) {
-			printf("Chopping Sentence\n");
 			chop_and_add(sen_list, c, last_sentence);
 			last_sentence = c;
 			new_sentence = 0;
@@ -206,7 +209,8 @@ void load_titles(char *title_file_path) {
 	int title_index = 0;
     for(c = text_buffer; *c != '\0'; c++) {
     	if(*c == '\n') {
-    		/* This does depend on the newline being in a valid place with a word following it */
+    		/* This does depend on the newline being in a valid place with a word following it.
+    		 * Basically allocates space for all the titles and then puts them in the title array. */
     		last_newline++;
     		int title_size = c - last_newline;
     		titles[title_index] = (char*) malloc(title_size + 1);
@@ -215,7 +219,6 @@ void load_titles(char *title_file_path) {
     		last_newline = c;
     		title_index++;
     	}
-    		
     }
 }
 
@@ -229,7 +232,6 @@ int is_title(char *text_buffer, int word_len) {
 		if(strlen(titles[i]) > word_len)
 			continue;
 		if(strncmp(titles[i], text_buffer - word_len, word_len) == 0) {
-			printf("found a title\n");
 			return 1;
 		}
 	}
