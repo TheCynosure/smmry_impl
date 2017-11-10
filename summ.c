@@ -17,24 +17,30 @@ typedef struct {
 
 typedef struct {
 	Node *head;
+	Node *tail;
 	int size;
 } LList;
 
 LList* create_llist() {
 	LList* list = malloc(sizeof(LList));
 	list->head = NULL;
+	list->tail = NULL;
 	list->size = 0;
 	return list;
 }
 
 /*
- * Simple Head Insertion Method.
+ * Simple Tail Insertion Method.
  */
 void insert(LList* l, char* data) {
 	Node* node = malloc(sizeof(Node));
 	node->data = data;
-	node->link = l->head;
-	l->head = node;
+	node->link = NULL;
+	if(l->head == NULL)
+		l->head = node;
+	else
+		l->tail->link = node;
+	l->tail = node;
 	l->size++;
 }
 
@@ -51,6 +57,8 @@ void cleanup(char* text_buff);
 LList *sentence_chop(char* text_buffer);
 /* Loads the titles array full of titles char pointers */
 void load_titles(char* titles_file_path);
+int is_title(char *text_buffer, int word_len);
+
 
 int main(int argc, char** argv) {
     int file_fd;
@@ -89,18 +97,14 @@ int main(int argc, char** argv) {
 	load_titles("data/titles.txt");
 
 	/* Printing the string based on this custom system. */
-    LList* l = sentence_chop(text_buffer);
-    printf("%d", l->size);
+    LList *l = sentence_chop(text_buffer);
     Node *curr = l->head;
-    char* prev = text_buffer;
     while(curr != NULL) {
-   		char* c;
-   		for(c = prev; c < curr->data; c++)
-    		printf("%c", *c);
-    	prev = curr->data;
-  		curr = curr->link;
+    	printf("%s\n\n", curr->data);
+    	curr = curr->link;
     }
     printf("\n");
+    printf("LL Size: %d\n", l->size);
     return 0;
 }
 
@@ -117,6 +121,13 @@ void cleanup(char* text_buff) {
     }
 }
 
+void chop_and_add(LList *ll, char* current_sen, char* last_sen) {
+	int size_of_sen = current_sen - last_sen + 1;
+	char *sentence = malloc(size_of_sen);
+	snprintf(sentence, size_of_sen, "%s", last_sen);
+	insert(ll, sentence);
+}
+
 /*
  * Chops sentences into linked list.
  * Requires that title array be 
@@ -124,8 +135,9 @@ void cleanup(char* text_buff) {
 LList *sentence_chop(char* text_buffer) {
 	LList *sen_list = (LList*) malloc(sizeof(LList));
 	int current_word_len = 0;
-	int new_sentence = 1;
+	int new_sentence = 0;
 	char *c;
+	char *last_sentence = text_buffer;
 	/* TODO: Make this work */
 	for(c = text_buffer; *c != '\0'; c++) {
 		/*Spaces signal the end of a word*/
@@ -135,8 +147,8 @@ LList *sentence_chop(char* text_buffer) {
 		 *of a title like Mr, Mrs, or Dr. If it is really a period than we need
 		 *to record this sentence beginning in the linked list.*/
 		else if(*c == '.') {
-			if(current_word_len >= 2 && current_word_len <= 3 && !is_title(c, current_word_len)) {
-				new_sentence = 0;
+			if(!is_title(c, current_word_len)) {
+				new_sentence = 1;
 				current_word_len = 0;
 				continue;
 			}
@@ -146,15 +158,17 @@ LList *sentence_chop(char* text_buffer) {
 		
 		/*If new sentence is needed, add it.*/
 		if(new_sentence) {
-			insert(sen_list, c);
-			new_sentence = 1;
+			printf("Chopping Sentence\n");
+			chop_and_add(sen_list, c, last_sentence);
+			last_sentence = c;
+			new_sentence = 0;
 		}
 	}
 
 	/*If we ended on a period, add it.*/
 	if(new_sentence) {
-		insert(sen_list, c);
-		new_sentence = 1;
+		chop_and_add(sen_list, c, last_sentence);
+		new_sentence = 0;
 	}
 
 	return sen_list;
@@ -206,18 +220,18 @@ void load_titles(char *title_file_path) {
 }
 
 /*
- * Returns 0 if the word pointed to by text_buffer (on the last letter) and is of size word_len
- * is a title. Returns 1 otherwise.
+ * Returns 1 (true) if the word pointed to by text_buffer (on the last letter) and is of size word_len
+ * is a title. Returns 0 (false) otherwise.
  */
 int is_title(char *text_buffer, int word_len) {
 	int i;
 	for(i = 0; i < TITLES_LEN; i++) {
 		if(strlen(titles[i]) > word_len)
 			continue;
-		if(strncmp(titles[i], text_buffer - strlen(titles[i]), strlen(titles[i])) == 0) {
+		if(strncmp(titles[i], text_buffer - word_len, word_len) == 0) {
 			printf("found a title\n");
-			return 0;
+			return 1;
 		}
 	}
-	return 1; 
+	return 0; 
 }
