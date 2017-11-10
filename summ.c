@@ -114,9 +114,7 @@ int main(int argc, char** argv) {
 void cleanup(char* text_buff) {
     char* c;
     for(c = text_buff; *c != '\0'; c++) {
-        if(*c == '\n')
-            *c = ' ';
-        else if(*c == '\t')
+        if(*c == '\n' || *c == ' ')
             *c = ' ';
     }
 }
@@ -142,7 +140,7 @@ LList *sentence_chop(char* text_buffer) {
 	int new_sentence = 0;
 	char *c;
 	char *last_sentence = text_buffer;
-	/* TODO: Make this work */
+	int inside_paren = 0;
 	for(c = text_buffer; *c != '\0'; c++) {
 		/*Spaces signal the end of a word*/
 		if(*c == ' ')
@@ -151,13 +149,18 @@ LList *sentence_chop(char* text_buffer) {
 		 *of a title like Mr, Mrs, or Dr. If it is really a period than we need
 		 *to record this sentence beginning in the linked list.*/
 		else if(*c == '.') {
-			if(!is_title(c, current_word_len)) {
+			if(!inside_paren && (*(c+1) == ' ' || *(c+1) == '\0') && !is_title(c, current_word_len)) {
 				new_sentence = 1;
 				current_word_len = 0;
 				continue;
 			}
 		} else {
 			current_word_len++;
+			if(*c == '(') {
+				inside_paren = 1;
+			} else if(*c == ')') {
+				inside_paren = 0;
+			}
 		}
 		
 		/*If new sentence is needed, add it.*/
@@ -169,10 +172,8 @@ LList *sentence_chop(char* text_buffer) {
 	}
 
 	/*If we ended on a period, add it.*/
-	if(new_sentence) {
+	if(new_sentence)
 		chop_and_add(sen_list, c, last_sentence);
-		new_sentence = 0;
-	}
 
 	return sen_list;
 }
@@ -197,7 +198,7 @@ void load_titles(char *title_file_path) {
         exit(2);
     }
     
-    /* While bytes_read is less than the file size, keep reading in 256 byte chunks. */
+    /* While bytes_read is less than the file size, keep reading in st_blksize byte chunks. */
     int bytes_read = 0;
     while((bytes_read += read(file_fd, text_buffer + bytes_read, stat_data.st_blksize)) < stat_data.st_size);
     /* End the text buffer with a null character. */
@@ -229,11 +230,10 @@ void load_titles(char *title_file_path) {
 int is_title(char *text_buffer, int word_len) {
 	int i;
 	for(i = 0; i < TITLES_LEN; i++) {
-		if(strlen(titles[i]) > word_len)
+		if(word_len - 1 != strlen(titles[i]))
 			continue;
-		if(strncmp(titles[i], text_buffer - word_len, word_len) == 0) {
+		else if(strncmp(titles[i], text_buffer - strlen(titles[i]), strlen(titles[i])) == 0)
 			return 1;
-		}
 	}
 	return 0; 
 }
