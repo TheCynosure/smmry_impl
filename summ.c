@@ -144,7 +144,7 @@ int main(int argc, char** argv) {
     LList *l = sentence_chop(text_buffer);
 
     /* Load our word lists. */
-
+	load_word_lists();
     /* Check for words in our sentencec_chop, otherwise increment their normal counts in this BST. */
 
     /* Tally the scores of each sentence */
