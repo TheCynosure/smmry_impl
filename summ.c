@@ -29,9 +29,7 @@ LList* create_llist() {
 	return list;
 }
 
-/*
- * Simple Tail Insertion Method.
- */
+/* Simple Tail Insertion Method. */
 void insert(LList* l, char* data) {
 	Node* node = malloc(sizeof(Node));
 	node->data = data;
@@ -47,6 +45,47 @@ void insert(LList* l, char* data) {
 /* ---
  * End of Implementation of Linked List
    --- */
+
+/* ---
+ * Implementation of a BST to be used later.
+   --- */
+
+typedef struct {
+	char *data;
+	int word_len;
+	int score;
+	void* left_child;
+	void* right_child;
+} BSTNode;
+
+typedef struct {
+	BSTNode* root;
+} Bst;
+
+
+void add(Bst* bst, char* data, int word_len) {
+	BSTNode** curr = &bst->root;
+	while(*curr != NULL) {
+		int shorter_word_len = ((*curr)->word_len < word_len)? (*curr)->word_len: word_len;
+		if(strncmp((*curr)->data, data, shorter_word_len) >= 0)
+			curr = (BSTNode**) &((*curr)->left_child);
+		else {
+			curr = (BSTNode**) &((*curr)->right_child);
+		}
+	}
+	/* Allocate a new node */
+	BSTNode* node = malloc(sizeof(BSTNode));
+	node->data = data;
+	node->word_len = word_len;
+	node->left_child = NULL;
+	node->right_child = NULL;
+	*curr = node;	 
+}
+
+/* ---
+ * End of Implementation
+   --- */
+ 
 
 #define TITLES_LEN 12
 static char* titles[TITLES_LEN];
@@ -93,18 +132,25 @@ int main(int argc, char** argv) {
     
     /* Get rid of all newlines and tabs. */
     cleanup(text_buffer);
-	/* Load titles for use in sentence chopping */
+	/* Load titles for use in sentence chopping. */
 	load_titles("data/titles.txt");
 
-	/* Printing the string based on this custom system. */
+	/* Load the sentences into this linked list. */
     LList *l = sentence_chop(text_buffer);
-    Node *curr = l->head;
-    while(curr != NULL) {
-    	printf("%s\n\n", curr->data);
-    	curr = curr->link;
-    }
-    printf("\n");
-    printf("LL Size: %d\n", l->size);
+
+    /* Load our word lists. */
+
+    /* Check for words in our sentencec_chop, otherwise increment their normal counts in this BST. */
+
+    /* Tally the scores of each sentence */
+
+
+    Bst* bst = malloc(sizeof(Bst));
+    bst->root = NULL;
+    add(bst, "Hello There World", 17);
+    add(bst, "A will be first", 15);
+    inorder_print(bst);
+    
     return 0;
 }
 

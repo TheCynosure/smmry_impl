@@ -1,0 +1,1 @@
+Get a bst working. I think I have to use double pointers to traverse the tree in add.
