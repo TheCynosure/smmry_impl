@@ -62,6 +62,11 @@ typedef struct {
 	BSTNode* root;
 } Bst;
 
+Bst* create_bst() {
+	Bst* bst = malloc(sizeof(bst));
+	bst->root = NULL;
+	return bst;
+}
 
 void add(Bst* bst, char* data, int word_len) {
 	BSTNode** curr = &bst->root;
@@ -143,13 +148,6 @@ int main(int argc, char** argv) {
     /* Check for words in our sentencec_chop, otherwise increment their normal counts in this BST. */
 
     /* Tally the scores of each sentence */
-
-
-    Bst* bst = malloc(sizeof(Bst));
-    bst->root = NULL;
-    add(bst, "Hello There World", 17);
-    add(bst, "A will be first", 15);
-    inorder_print(bst);
     
     return 0;
 }
