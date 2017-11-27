@@ -5,6 +5,16 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <string.h>
+#include <ctype.h>
+
+/* ---
+   Data Type to use later.
+   --- */
+
+typedef struct {
+	char* key;
+	char* val;
+} Dt;
 
 /* ---
    Implementation of a Linked List to be used later.
@@ -94,6 +104,8 @@ void add(Bst* bst, char* data, int word_len) {
 
 #define TITLES_LEN 12
 static char* titles[TITLES_LEN];
+#define SYN_LEN 350
+static Dt* synonyms[SYN_LEN];
 
 /* Initially called to strip out newlines, tabs. */
 void cleanup(char* text_buff);
@@ -102,7 +114,7 @@ LList *sentence_chop(char* text_buffer);
 /* Loads the titles array full of titles char pointers */
 void load_titles(char* titles_file_path);
 int is_title(char *text_buffer, int word_len);
-
+void load_syn_list(char* syns_path);
 
 int main(int argc, char** argv) {
     int file_fd;
@@ -144,12 +156,55 @@ int main(int argc, char** argv) {
     LList *l = sentence_chop(text_buffer);
 
     /* Load our word lists. */
-	load_word_lists();
+	load_syn_list("data/formattedcommonsyns.txt");
+
+	int i;
+	for(i = 0; i < SYN_LEN; i++) {
+		printf("%s %s", synonyms[i]->key, synonyms[i]->val);
+	}
+
     /* Check for words in our sentencec_chop, otherwise increment their normal counts in this BST. */
 
     /* Tally the scores of each sentence */
+
+    /* Free all heap memory */
     
     return 0;
+}
+
+/* Loads our word list data into our arrays.
+ * Specifically the synonyms and plural forms of words.
+ */
+
+#define MAX_LEN 1024
+void load_syn_list(char* syns_path) {
+	char* line = (char*) malloc(MAX_LEN);
+	FILE* syn_fd = fopen(syns_path, "r");	
+	size_t n;
+	int index = 0;		
+	while(getline(&line, &n, syn_fd) != EOF) {
+		char synonym[MAX_LEN], base_word[MAX_LEN];
+		sscanf(line, "%s %s", synonym, base_word);
+		/*Convert the first letter of base word to lower.*/
+		base_word[0] = tolower(base_word[0]);
+		/*Load into array*/
+		Dt* new_dt = malloc(sizeof(Dt));
+	
+		char* synonym_cp = malloc(strlen(synonym));
+		memcpy(synonym, synonym_cp, strlen(synonym));
+		*(synonym_cp + strlen(synonym)) = '\n';
+
+		char* base_word_cp = malloc(strlen(base_word) + 1);
+		memcpy(base_word, base_word_cp, strlen(base_word) + 1);
+		*(base_word_cp + strlen(base_word)) = '\n';
+
+		new_dt->key = synonym_cp;
+		new_dt->val = base_word_cp;
+		
+		synonyms[index++] = new_dt;
+	}
+	free(line);
+	fclose(syn_fd);
 }
 
 /* Initially called to strip out newlines, tabs. 
@@ -265,6 +320,8 @@ void load_titles(char *title_file_path) {
     		title_index++;
     	}
     }
+
+    close(file_fd);
 }
 
 /*
