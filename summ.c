@@ -275,6 +275,16 @@ int main(int argc, char** argv) {
         int i;
         for(i = 0; i < return_num; i++) {
             if(top_scorers[i] == 0 || top_scorers[i]->score < current_node->score) {
+                if(return_num > 1) {
+                    int k = i;
+                    Node* last_val = NULL;
+                    for(k; k < return_num; k++) {
+                        Node* temp = top_scorers[k];
+                        top_scorers[k] = last_val;
+                        last_val = temp;
+                    }
+                }
+                    
                 top_scorers[i] = current_node;
                 break;
             }   
