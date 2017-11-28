@@ -53,6 +53,17 @@ void insert(LList* l, char* data) {
 	l->size++;
 }
 
+void freeList(LList *l) {
+    Node* current_node = l->head;
+    while(current_node != NULL) {
+        Node* temp = current_node->link;
+        free(current_node->data);
+        free(current_node);
+        current_node = temp;
+    }
+    free(l);
+}
+
 /* ---
  * End of Implementation of Linked List
    --- */
@@ -128,6 +139,20 @@ int get_score(Bst* bst, char* data, int word_len) {
 	return 0;
 }
 
+void freeNode(BSTNode* node) {
+    if(node == NULL)
+        return;
+    freeNode(node->left_child);
+    freeNode(node->right_child);
+    free(node->data);
+    free(node);
+}
+
+void freeBst(Bst* bst) {
+    freeNode(bst->root);
+    free(bst);   
+}
+
 /* ---
  * End of Implementation
    --- */
@@ -149,7 +174,7 @@ void load_titles(char* titles_file_path);
 int is_title(char *text_buffer, int word_len);
 void load_list(char* syns_path, Dt* list[]);
 char* contains(Dt* list[], int l_size, char word[]);
-
+void freeDtList(Dt* list[], int len);
 
 int main(int argc, char** argv) {
     int file_fd;
@@ -239,7 +264,8 @@ int main(int argc, char** argv) {
         for(c = current_node->data; *c != '\0'; c++) {
             if(*c == ' ') {
                 /* Add score to our current sentence score.  */
-                current_node->score += get_score(word_bst, c, curr_word_len);
+                current_node->score += get_score(word_bst, curr_word, curr_word_len);
+                printf("%.*s\n", curr_word_len, curr_word);
                 curr_word = c + 1;
                 curr_word_len = 0;
             } else {
@@ -263,9 +289,24 @@ int main(int argc, char** argv) {
     }
     
     /* Free all heap memory */
-    
-            
+    freeDtList(synonyms, SYN_LEN);
+    freeDtList(irreg_nouns, NOUN_LEN);
+    for(i = 0; i < TITLES_LEN; i++) {
+        free(titles[i]);
+    }
+    freeList(l);
+    freeBst(word_bst);
+    free(text_buffer);  
     return 0;
+}
+
+void freeDtList(Dt* list[], int len) {
+    int i;
+    for(i = 0; i < len; i++) {
+        free(list[i]->key);
+        free(list[i]->val);
+        free(list[i]); 
+    }
 }
 
 /* Checks if the word is in the specified DtList. Then returns the data if true or NULL
@@ -425,7 +466,7 @@ void load_titles(char *title_file_path) {
     		title_index++;
     	}
     }
-
+    free(text_buffer);
     close(file_fd);
 }
 
