@@ -265,7 +265,6 @@ int main(int argc, char** argv) {
             if(*c == ' ') {
                 /* Add score to our current sentence score.  */
                 current_node->score += get_score(word_bst, curr_word, curr_word_len);
-                printf("%.*s\n", curr_word_len, curr_word);
                 curr_word = c + 1;
                 curr_word_len = 0;
             } else {
