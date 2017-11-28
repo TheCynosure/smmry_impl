@@ -23,6 +23,7 @@ typedef struct {
 typedef struct {
 	char *data;
 	void *link;
+	int score;
 } Node;
 
 typedef struct {
@@ -78,23 +79,53 @@ Bst* create_bst() {
 	return bst;
 }
 
-void add(Bst* bst, char* data, int word_len) {
+/* Returns 1 if added a node, returns 0 otherwise. */
+int add(Bst* bst, char* data, int word_len) {
 	BSTNode** curr = &bst->root;
+	int allocate = 1;
 	while(*curr != NULL) {
 		int shorter_word_len = ((*curr)->word_len < word_len)? (*curr)->word_len: word_len;
-		if(strncmp((*curr)->data, data, shorter_word_len) >= 0)
+		int result = strncmp((*curr)->data, data, shorter_word_len);
+		if(result == 0) {
+		    /* Equal Strings */
+		    (*curr)->score++;
+		    allocate = 0;
+		    break;
+		} else if(result > 0)
 			curr = (BSTNode**) &((*curr)->left_child);
 		else {
 			curr = (BSTNode**) &((*curr)->right_child);
 		}
 	}
-	/* Allocate a new node */
-	BSTNode* node = malloc(sizeof(BSTNode));
-	node->data = data;
-	node->word_len = word_len;
-	node->left_child = NULL;
-	node->right_child = NULL;
-	*curr = node;	 
+	
+	if(allocate) {
+    	/* Allocate a new node */
+    	BSTNode* node = malloc(sizeof(BSTNode));
+    	node->data = data;
+    	node->score = 1;
+    	node->word_len = word_len;
+    	node->left_child = NULL;
+    	node->right_child = NULL;
+    	*curr = node;
+	}	 
+	return allocate;
+}
+
+int get_score(Bst* bst, char* data, int word_len) {
+	BSTNode** curr = &bst->root;
+    while(*curr != NULL) {
+		int shorter_word_len = ((*curr)->word_len < word_len)? (*curr)->word_len: word_len;
+		int result = strncmp((*curr)->data, data, shorter_word_len);
+		if(result == 0) {
+		    return (*curr)->score;
+		    break;
+		} else if(result > 0)
+			curr = (BSTNode**) &((*curr)->left_child);
+		else {
+			curr = (BSTNode**) &((*curr)->right_child);
+		}
+	}
+	return 0;
 }
 
 /* ---
@@ -106,6 +137,8 @@ void add(Bst* bst, char* data, int word_len) {
 static char* titles[TITLES_LEN];
 #define SYN_LEN 350
 static Dt* synonyms[SYN_LEN];
+#define NOUN_LEN 31
+static Dt* irreg_nouns[NOUN_LEN];
 
 /* Initially called to strip out newlines, tabs. */
 void cleanup(char* text_buff);
@@ -114,7 +147,9 @@ LList *sentence_chop(char* text_buffer);
 /* Loads the titles array full of titles char pointers */
 void load_titles(char* titles_file_path);
 int is_title(char *text_buffer, int word_len);
-void load_syn_list(char* syns_path);
+void load_list(char* syns_path, Dt* list[]);
+char* contains(Dt* list[], int l_size, char word[]);
+
 
 int main(int argc, char** argv) {
     int file_fd;
@@ -156,28 +191,100 @@ int main(int argc, char** argv) {
     LList *l = sentence_chop(text_buffer);
 
     /* Load our word lists. */
-	load_syn_list("data/formattedcommonsyns.txt");
+	load_list("data/formattedcommonsyns.txt", synonyms);
+    load_list("data/formattedirregnouns.txt", irreg_nouns);
 
-	int i;
-	for(i = 0; i < SYN_LEN; i++) {
-		printf("%s %s", synonyms[i]->key, synonyms[i]->val);
-	}
+    Bst* word_bst = create_bst();
+    /* Check for words in our sentence_chop, otherwise increment their normal counts in this BST. */
+    Node* current_node = l->head;
+    while(current_node != NULL) {
+        char* c = current_node->data;
+        char* curr_word = current_node->data;
+        int curr_word_len = 0;
+        for(c = current_node->data; *c != '\0'; c++) {
+            if(*c == ' ') {
+                /* Add word to our Bst. */
+                char* word = malloc(256);
+                strncpy(word, curr_word, curr_word_len);
+                word[0] = tolower(word[0]);
+                char* eq;
+                if((eq = contains(synonyms, SYN_LEN, word)) != NULL) {
+                    strcpy(word, eq);
+                } else if((eq = contains(irreg_nouns, NOUN_LEN, word)) != NULL) {
+                    strcpy(word, eq);
+                }
 
-    /* Check for words in our sentencec_chop, otherwise increment their normal counts in this BST. */
-
+                if(add(word_bst, word, curr_word_len) == 0)
+                    free(word);
+                
+                curr_word = c + 1;
+                curr_word_len = 0;
+            } else {
+                curr_word_len++;
+            }
+        }
+        current_node = current_node->link;
+    }
+    
     /* Tally the scores of each sentence */
+    current_node = l->head;
+    int return_num = 3;
+    Node* top_scorers[return_num];
+    memset(top_scorers, 0, sizeof(Node*) * return_num);
+    while(current_node != NULL) {
+        current_node->score = 0;
+        char* c = current_node->data;
+        char* curr_word = current_node->data;
+        int curr_word_len = 0;
+        for(c = current_node->data; *c != '\0'; c++) {
+            if(*c == ' ') {
+                /* Add score to our current sentence score.  */
+                current_node->score += get_score(word_bst, c, curr_word_len);
+                curr_word = c + 1;
+                curr_word_len = 0;
+            } else {
+                curr_word_len++;
+            }
+        }
 
+        int i;
+        for(i = 0; i < return_num; i++) {
+            if(top_scorers[i] == 0 || top_scorers[i]->score < current_node->score) {
+                top_scorers[i] = current_node;
+                break;
+            }   
+        }
+        current_node = current_node->link;
+    }
+
+    int i;
+    for(i = 0; i < return_num; i++) {
+        printf("%s", top_scorers[i]->data);
+    }
+    
     /* Free all heap memory */
     
+            
     return 0;
+}
+
+/* Checks if the word is in the specified DtList. Then returns the data if true or NULL
+ * Otherwise.
+ */
+char* contains(Dt* list[], int l_size, char word[]) {
+    int i;
+    for(i = 0; i < l_size; i++) {
+        if(strcmp(list[i]->key, word) == 0)
+            return list[i]->val;
+    }
+    return NULL;
 }
 
 /* Loads our word list data into our arrays.
  * Specifically the synonyms and plural forms of words.
  */
-
 #define MAX_LEN 1024
-void load_syn_list(char* syns_path) {
+void load_list(char* syns_path, Dt* list[]) {
 	char* line = (char*) malloc(MAX_LEN);
 	FILE* syn_fd = fopen(syns_path, "r");	
 	size_t n;
@@ -191,17 +298,15 @@ void load_syn_list(char* syns_path) {
 		Dt* new_dt = malloc(sizeof(Dt));
 	
 		char* synonym_cp = malloc(strlen(synonym));
-		memcpy(synonym, synonym_cp, strlen(synonym));
-		*(synonym_cp + strlen(synonym)) = '\n';
+		strcpy(synonym_cp, synonym);
 
-		char* base_word_cp = malloc(strlen(base_word) + 1);
-		memcpy(base_word, base_word_cp, strlen(base_word) + 1);
-		*(base_word_cp + strlen(base_word)) = '\n';
+		char* base_word_cp = malloc(strlen(base_word));
+		strcpy(base_word_cp, base_word);
 
 		new_dt->key = synonym_cp;
 		new_dt->val = base_word_cp;
 		
-		synonyms[index++] = new_dt;
+		list[index++] = new_dt;
 	}
 	free(line);
 	fclose(syn_fd);
