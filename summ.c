@@ -179,8 +179,8 @@ void freeDtList(Dt* list[], int len);
 int main(int argc, char** argv) {
     int file_fd;
     /* No file was given, throw error */
-    if(argc < 2) {
-        fprintf(stderr, "You need to specify a file!\n");
+    if(argc < 3) {
+        fprintf(stderr, "Usage: ./summ <filename> <# of sentences for summary>\n");
         return 1;
     }
     
@@ -190,6 +190,10 @@ int main(int argc, char** argv) {
         fprintf(stderr, "Can't access file, quitting!\n");
         return 1;
     }
+
+    /* Number of sentences to return */
+    int return_num = 0;
+    sscanf(argv[2], "%d", &return_num);
     
     /* Find the size of the file. */
     struct stat stat_data;
@@ -253,7 +257,6 @@ int main(int argc, char** argv) {
     
     /* Tally the scores of each sentence */
     current_node = l->head;
-    int return_num = 3;
     Node* top_scorers[return_num];
     memset(top_scorers, 0, sizeof(Node*) * return_num);
     while(current_node != NULL) {
@@ -296,6 +299,7 @@ int main(int argc, char** argv) {
     for(i = 0; i < return_num; i++) {
         printf("%s", top_scorers[i]->data);
     }
+    printf("\n");
     
     /* Free all heap memory */
     freeDtList(synonyms, SYN_LEN);
