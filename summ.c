@@ -114,6 +114,13 @@ int main(int argc, char** argv) {
 	/* Load the sentences into this linked list. */
     LList *l = sentence_chop(text_buffer);
 
+    /* Print sentences */
+    Node *curr = NULL;
+    printf("--- Sentences ---\n");
+    for (curr = l->head; curr != NULL; curr = curr->link)
+        printf("%s\n", curr->data);
+    printf("--- End ---\n");
+
     /* Make sure we have enough sentences to return */
     if(return_num > l->size) {
         fprintf(stderr, "Too many return sentences, not a long enough text!\n");
@@ -251,7 +258,7 @@ LList *sentence_chop(char* text_buffer) {
 		 *of a title like Mr, Mrs, or Dr. If it is really a period than we need
 		 *to record this sentence beginning in the linked list.*/
 		else if(*c == '.') {
-			if(!inside_paren && (*(c+1) == ' ' || *(c+1) == '\0') && !is_title(c, current_word_len)) {
+			if(!inside_paren && (*(c+1) == ' ' || *(c+1) == '\0' || *(c+1) == '(' || *(c+1) == '[') && !is_title(c, current_word_len)) {
 				new_sentence = 1;
 				current_word_len = 0;
 				continue;
