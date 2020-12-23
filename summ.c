@@ -108,18 +108,12 @@ int main(int argc, char** argv) {
     /* Get rid of all newlines and tabs. */
     strip_newlines_tabs(text_buffer);
 
-	/* Load titles for use in sentence chopping. */
-	load_array(titles, "data/titles.txt");
+	  /* Load titles for use in sentence chopping. */
+	  load_array(titles, "data/titles.txt");
 
-	/* Load the sentences into this linked list. */
+	  /* Load the sentences into this linked list. */
     LList *l = sentence_chop(text_buffer);
 
-    /* Print sentences */
-    Node *curr = NULL;
-    printf("--- Sentences ---\n");
-    for (curr = l->head; curr != NULL; curr = curr->link)
-        printf("%s\n", curr->data);
-    printf("--- End ---\n");
 
     /* Make sure we have enough sentences to return */
     if(return_num > l->size) {
