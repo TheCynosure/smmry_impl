@@ -37,9 +37,9 @@ For an example we are going to summarize this [Wikipedia article](https://en.wik
 ./summ example.txt 3
 ```
 3. The summary will be printed to the console and will be the 3 most important sentences.
-```
-Predators of the wood stork include raccoons (which predate on chicks), northern crested caracaras, which prey on eggs, and other birds of prey, which feed on eggs and chicks. During the breeding season, which is initiated when the water levels decline and can occur anytime between November and August, a single clutch of three to five eggs is laid. They fledge 60 to 65 days after hatching, although only about 31% of nests fledge a chick in any given year, with most chicks dying during their first two weeks, despite being watched by an adult during that time.
-```
+
+> Predators of the wood stork include raccoons (which predate on chicks), northern crested caracaras, which prey on eggs, and other birds of prey, which feed on eggs and chicks. During the breeding season, which is initiated when the water levels decline and can occur anytime between November and August, a single clutch of three to five eggs is laid. They fledge 60 to 65 days after hatching, although only about 31% of nests fledge a chick in any given year, with most chicks dying during their first two weeks, despite being watched by an adult during that time.
+
 
 ### Notice
 
